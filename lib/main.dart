@@ -8,6 +8,8 @@ void main() {
   runApp(const ScreenShareApp());
 }
 
+const platform = MethodChannel('com.yourapp/screen_capture');
+
 class ScreenShareApp extends StatelessWidget {
   const ScreenShareApp({Key? key}) : super(key: key);
 
@@ -64,7 +66,7 @@ class _ScreenShareScreenState extends State<ScreenShareScreen> {
       } else {
         request.response
           ..statusCode = HttpStatus.internalServerError
-          ..write('Failed to capture screen')
+          ..write('Failed to capture screen in flutter')
           ..close();
       }
     });
@@ -84,6 +86,26 @@ class _ScreenShareScreenState extends State<ScreenShareScreen> {
     }
   }
 
+// Request permission to capture the screen
+  Future<void> startProjection() async {
+    try {
+      await platform.invokeMethod('startProjection');
+    } catch (e) {
+      print('Error starting projection: $e');
+    }
+  }
+
+// Capture the screen
+  Future<Uint8List?> captureScreen() async {
+    try {
+      final Uint8List? jpegBytes = await platform.invokeMethod('captureScreen');
+      return jpegBytes;
+    } catch (e) {
+      print('Error capturing screen: $e');
+      return null;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     if (localIp == null) {
@@ -96,6 +118,16 @@ class _ScreenShareScreenState extends State<ScreenShareScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
+            ElevatedButton(
+                onPressed: () {
+                  startProjection();
+                },
+                child: Text("start")),
+            ElevatedButton(
+                onPressed: () {
+                  captureScreen();
+                },
+                child: Text("Capture")),
             Text('Server running on http://$localIp:8080'),
             SizedBox(height: 10),
             const Text('Scan the QR Code to Connect:'),
